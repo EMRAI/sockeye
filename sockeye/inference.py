@@ -35,6 +35,9 @@ from . import utils
 from . import vocab
 from .log import is_python34
 
+from .lmrescore import NgramRescorer
+import sys
+
 logger = logging.getLogger(__name__)
 
 
@@ -1057,6 +1060,9 @@ class Translator:
                     self.buckets_source,
                     0 if self.global_avoid_trie is None else len(self.global_avoid_trie))
 
+        # GREG'S MOD
+        self.ngramrescorer = NgramRescorer('/home/ubuntu/sockeye_experiments/lm.monolingual.o-6.blm.rep', target_vocab, float(os.environ['LMSCALE']))
+
     @property
     def num_source_factors(self) -> int:
         return self.models[0].num_source_factors
@@ -1483,6 +1489,9 @@ class Translator:
             # finished rows are inf everywhere except column zero, which holds the accumulated model score
             scores = self._update_scores.forward(scores, finished, inactive, scores_accumulated, self.inf_array, pad_dist)
 
+            # GREG'S MOD: add scores from n-gram LM
+            self.ngramrescorer.add_conditional_scores(sequences, scores)
+
             # Mark entries that should be blocked as having a score of np.inf
             if self.global_avoid_trie or any(raw_avoid_list):
                 block_indices = avoid_states.avoid()
@@ -1492,6 +1501,9 @@ class Translator:
             # (3) Get beam_size winning hypotheses for each sentence block separately. Only look as
             # far as the active beam size for each sentence.
             best_hyp_indices, best_word_indices, scores_accumulated = self._topk(scores)
+            #print('WORD', t, file=sys.stderr)
+            #print('MIN SCORE', [min(x.asnumpy()) for x in scores], file=sys.stderr)
+            #print('SCORES ACCUMULATED', scores_accumulated, file=sys.stderr)
 
             # Constraints for constrained decoding are processed sentence by sentence
             if any(raw_constraint_list):
