@@ -81,15 +81,38 @@ def main():
     with tempfile.TemporaryDirectory(prefix="sockeye.autopilot.") as tmp_dir:
         work_dir = os.path.join(tmp_dir, "workspace")
 
-        # WNMT task with pre-tokenized data
+        # WMT task with raw data (Transformer)
         command = [sys.executable,
                    "-m",
                    "contrib.autopilot.autopilot",
-                   "--task={}".format(WNMT_TASK),
+                   "--task={}".format(WMT_TASK),
                    "--model=transformer",
                    "--gpus=0",
                    "--test"]
         run_test(command, workspace=work_dir)
+
+        # WMT task with raw data (GNMT)
+        command = [sys.executable,
+                   "-m",
+                   "contrib.autopilot.autopilot",
+                   "--task={}".format(WMT_TASK),
+                   "--model=gnmt_like",
+                   "--decode-settings=gnmt_like",
+                   "--gpus=0",
+                   "--test"]
+        run_test(command, workspace=work_dir)
+
+        # TODO: Currently disabled due to periodic outages of nlp.stanford.edu
+        #       preventing downloading data.
+        # WNMT task with pre-tokenized data (Transformer)
+        # command = [sys.executable,
+        #            "-m",
+        #            "contrib.autopilot.autopilot",
+        #            "--task={}".format(WNMT_TASK),
+        #            "--model=transformer",
+        #            "--gpus=0",
+        #            "--test"]
+        # run_test(command, workspace=work_dir)
 
         # WMT task, prepare data only
         command = [sys.executable,
@@ -101,17 +124,7 @@ def main():
                    "--test"]
         run_test(command, workspace=work_dir)
 
-        # WMT task with raw data
-        command = [sys.executable,
-                   "-m",
-                   "contrib.autopilot.autopilot",
-                   "--task={}".format(WMT_TASK),
-                   "--model=transformer",
-                   "--gpus=0",
-                   "--test"]
-        run_test(command, workspace=work_dir)
-
-        # Custom task (raw data)
+        # Custom task (raw data, Transformer)
         command = [sys.executable,
                    "-m",
                    "contrib.autopilot.autopilot",
@@ -140,7 +153,7 @@ def main():
                    "--test"]
         run_test(command, workspace=work_dir)
 
-        # Custom task (tokenized data)
+        # Custom task (tokenized data, Transformer)
         command = [sys.executable,
                    "-m",
                    "contrib.autopilot.autopilot",
@@ -167,7 +180,7 @@ def main():
                    "--test"]
         run_test(command, workspace=work_dir)
 
-        # Custom task (byte-pair encoded data)
+        # Custom task (byte-pair encoded data, Transformer)
         command = [sys.executable,
                    "-m",
                    "contrib.autopilot.autopilot",
@@ -192,6 +205,7 @@ def main():
                    "--gpus=0",
                    "--test"]
         run_test(command, workspace=work_dir)
+
 
 if __name__ == "__main__":
     main()
